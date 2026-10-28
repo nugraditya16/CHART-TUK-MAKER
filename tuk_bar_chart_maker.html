@@ -1,0 +1,845 @@
+<!DOCTYPE html>
+<html lang="id" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TUK & Realisasi Bar Chart Maker</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        tukBrown: '#8B5A2B',
+                        hasilOrange: '#F97316'
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+        input[type="color"] {
+            -webkit-appearance: none;
+            border: none;
+            padding: 0;
+        }
+        input[type="color"]::-webkit-color-swatch-wrapper {
+            padding: 0;
+        }
+        input[type="color"]::-webkit-color-swatch {
+            border: none;
+            border-radius: 6px;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 font-sans min-h-screen flex flex-col">
+
+    <!-- Top Navigation Bar (Mobile Optimized) -->
+    <header class="bg-white/95 backdrop-blur-sm border-b border-slate-200 sticky top-0 z-30 shadow-xs">
+        <div class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 h-14 sm:h-16 flex items-center justify-between gap-2">
+            <!-- Brand Title -->
+            <div class="flex items-center gap-2.5 min-w-0">
+                <div class="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-br from-amber-700 to-orange-500 flex items-center justify-center text-white shadow-sm shrink-0">
+                    <i data-lucide="bar-chart-3" class="w-5 h-5 sm:w-6 sm:h-6"></i>
+                </div>
+                <div class="min-w-0">
+                    <h1 class="text-sm sm:text-lg font-bold text-slate-900 truncate leading-tight">TUK Chart Studio</h1>
+                    <p class="text-[11px] sm:text-xs text-slate-500 truncate">Generator Grafik TUK & Realisasi Proker</p>
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="flex items-center gap-1.5 sm:gap-2.5 shrink-0">
+                <button onclick="loadDemoData()" class="p-2 sm:px-3 sm:py-2 text-xs sm:text-sm font-medium text-slate-600 bg-slate-100 hover:bg-slate-200 active:scale-95 rounded-lg transition flex items-center gap-1.5" title="Reset Data Contoh">
+                    <i data-lucide="rotate-ccw" class="w-4 h-4"></i>
+                    <span class="hidden sm:inline">Reset Demo</span>
+                </button>
+                <button onclick="downloadPNG()" class="px-3 py-2 sm:px-4 sm:py-2 text-xs sm:text-sm font-semibold text-white bg-gradient-to-r from-amber-700 to-orange-600 hover:from-amber-800 hover:to-orange-700 active:scale-95 rounded-lg shadow-sm hover:shadow-md transition flex items-center gap-1.5">
+                    <i data-lucide="download" class="w-4 h-4 shrink-0"></i>
+                    <span>Unduh PNG</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Notification Toast -->
+    <div id="toast" class="fixed bottom-5 right-5 z-50 transform translate-y-20 opacity-0 transition-all duration-300 pointer-events-none">
+        <div id="toastContent" class="bg-slate-900 text-white px-4 py-3 rounded-xl shadow-xl flex items-center space-x-3 text-sm font-medium border border-slate-700">
+            <i id="toastIcon" data-lucide="sparkles" class="w-5 h-5 text-amber-400"></i>
+            <span id="toastMessage">Notifikasi</span>
+        </div>
+    </div>
+
+    <!-- Main Workspace -->
+    <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 grid grid-cols-1 lg:grid-cols-12 gap-6">
+        
+        <!-- Left Panel: Input & Configuration (5 cols on lg) -->
+        <div class="lg:col-span-5 space-y-6">
+            
+            <!-- Card 1: Identitas Proker -->
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-5">
+                <div class="flex items-center justify-between mb-4">
+                    <h2 class="text-sm font-bold uppercase tracking-wider text-slate-500 flex items-center gap-2">
+                        <i data-lucide="folder-kanban" class="w-4 h-4 text-amber-700"></i>
+                        Identitas Program Kerja / Agenda
+                    </h2>
+                </div>
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 mb-1">Nama Proker / Agenda</label>
+                        <input type="text" id="prokerName" value="Training With KOMINFO 2026" oninput="renderCanvas()" placeholder="Contoh: Seminar Nasional Teknologi" class="w-full px-3.5 py-2 rounded-xl border border-slate-300 focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-sm font-medium transition outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 mb-1">Subjudul / Keterangan Tambahan (Opsional)</label>
+                        <input type="text" id="prokerSub" value="Perbandingan Target Ukuran Keberhasilan (TUK) dan Realisasi Hasil" oninput="renderCanvas()" placeholder="Contoh: Departemen Pengembangan SDM" class="w-full px-3.5 py-2 rounded-xl border border-slate-300 focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-sm transition outline-none">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Card 2: Tabel Narasi TUK -->
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-5">
+                <div class="flex flex-wrap items-center justify-between gap-2 mb-4">
+                    <div>
+                        <h2 class="text-sm font-bold uppercase tracking-wider text-slate-500 flex items-center gap-2">
+                            <i data-lucide="table-2" class="w-4 h-4 text-orange-600"></i>
+                            Data Indikator & Narasi TUK
+                        </h2>
+                        <p class="text-xs text-slate-400 mt-0.5">Teks narasi TUK ditampilkan apa adanya di bawah bar chart dan otomatis menyesuaikan ukuran jika kalimatnya panjang.</p>
+                    </div>
+                </div>
+
+                <!-- Dynamic Rows Container -->
+                <div id="rowsContainer" class="space-y-4 max-h-[460px] overflow-y-auto pr-1">
+                    <!-- Rows injected by JS -->
+                </div>
+
+                <button onclick="addNewRow()" class="mt-4 w-full py-2.5 border-2 border-dashed border-slate-300 hover:border-orange-500 text-slate-600 hover:text-orange-600 rounded-xl text-xs font-semibold flex items-center justify-center gap-2 transition bg-slate-50/50 hover:bg-orange-50/30">
+                    <i data-lucide="plus-circle" class="w-4 h-4"></i>
+                    <span>Tambah Indikator TUK</span>
+                </button>
+            </div>
+
+            <!-- Card 3: Kustomisasi Ukuran & Warna -->
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-5">
+                <h2 class="text-sm font-bold uppercase tracking-wider text-slate-500 flex items-center gap-2 mb-4">
+                    <i data-lucide="sliders-horizontal" class="w-4 h-4 text-amber-700"></i>
+                    Kustomisasi Gambar & Warna
+                </h2>
+
+                <div class="space-y-5">
+                    <!-- Color Pickers -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div class="p-3 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between">
+                            <div>
+                                <span class="block text-xs font-bold text-slate-700">Warna Bar TUK</span>
+                                <span id="tukColorHex" class="text-[11px] font-mono text-slate-500">#8B5A2B</span>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <input type="color" id="tukColor" value="#8B5A2B" oninput="updateColors()" class="w-9 h-9 rounded-lg cursor-pointer shadow-inner border border-slate-300">
+                            </div>
+                        </div>
+
+                        <div class="p-3 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between">
+                            <div>
+                                <span class="block text-xs font-bold text-slate-700">Warna Bar Hasil</span>
+                                <span id="hasilColorHex" class="text-[11px] font-mono text-slate-500">#F97316</span>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <input type="color" id="hasilColor" value="#F97316" oninput="updateColors()" class="w-9 h-9 rounded-lg cursor-pointer shadow-inner border border-slate-300">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Quick Color Presets -->
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-2">Preset Kombinasi Warna</label>
+                        <div class="flex flex-wrap gap-2">
+                            <button onclick="setColorPreset('#8B5A2B', '#F97316')" class="px-2.5 py-1 rounded-lg text-xs font-medium border border-slate-200 bg-white hover:bg-slate-50 flex items-center gap-1.5">
+                                <span class="w-3 h-3 rounded-full bg-[#8B5A2B]"></span>
+                                <span class="w-3 h-3 rounded-full bg-[#F97316]"></span>
+                                <span>Default (Coklat & Oren)</span>
+                            </button>
+                            <button onclick="setColorPreset('#5C4033', '#FB923C')" class="px-2.5 py-1 rounded-lg text-xs font-medium border border-slate-200 bg-white hover:bg-slate-50 flex items-center gap-1.5">
+                                <span class="w-3 h-3 rounded-full bg-[#5C4033]"></span>
+                                <span class="w-3 h-3 rounded-full bg-[#FB923C]"></span>
+                                <span>Kopi & Amber</span>
+                            </button>
+                            <button onclick="setColorPreset('#1E3A8A', '#06B6D4')" class="px-2.5 py-1 rounded-lg text-xs font-medium border border-slate-200 bg-white hover:bg-slate-50 flex items-center gap-1.5">
+                                <span class="w-3 h-3 rounded-full bg-[#1E3A8A]"></span>
+                                <span class="w-3 h-3 rounded-full bg-[#06B6D4]"></span>
+                                <span>Navy & Cyan</span>
+                            </button>
+                            <button onclick="setColorPreset('#065F46', '#10B981')" class="px-2.5 py-1 rounded-lg text-xs font-medium border border-slate-200 bg-white hover:bg-slate-50 flex items-center gap-1.5">
+                                <span class="w-3 h-3 rounded-full bg-[#065F46]"></span>
+                                <span class="w-3 h-3 rounded-full bg-[#10B981]"></span>
+                                <span>Emerald</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Image Size Settings -->
+                    <div class="border-t border-slate-200 pt-4">
+                        <div class="flex items-center justify-between mb-2">
+                            <label class="text-xs font-semibold text-slate-700">Ukuran Gambar PNG (Piksel)</label>
+                            <select id="sizePreset" onchange="applySizePreset()" class="text-xs bg-slate-100 border border-slate-300 rounded-lg px-2 py-1 font-medium text-slate-700 outline-none">
+                                <option value="1200x700">Presentasi HD (1200 x 700)</option>
+                                <option value="1600x900">Widescreen 16:9 (1600 x 900)</option>
+                                <option value="1080x1080">Square / Feed IG (1080 x 1080)</option>
+                                <option value="1000x750">Dokumen LPJ 4:3 (1000 x 750)</option>
+                                <option value="custom">Kustom Manual</option>
+                            </select>
+                        </div>
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="block text-[11px] text-slate-500 mb-1">Lebar (Width px)</label>
+                                <input type="number" id="imgWidth" value="1200" min="500" max="3840" step="10" oninput="onCustomDimensionChange()" class="w-full px-3 py-1.5 rounded-lg border border-slate-300 text-sm font-medium">
+                            </div>
+                            <div>
+                                <label class="block text-[11px] text-slate-500 mb-1">Tinggi (Height px)</label>
+                                <input type="number" id="imgHeight" value="700" min="400" max="2160" step="10" oninput="onCustomDimensionChange()" class="w-full px-3 py-1.5 rounded-lg border border-slate-300 text-sm font-medium">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Additional Chart Options -->
+                    <div class="border-t border-slate-200 pt-4 grid grid-cols-2 gap-3">
+                        <label class="flex items-center space-x-2 text-xs font-medium text-slate-700 cursor-pointer">
+                            <input type="checkbox" id="showPercentage" checked onchange="renderCanvas()" class="rounded text-orange-600 focus:ring-orange-500 w-4 h-4">
+                            <span>Tampilkan % Capaian</span>
+                        </label>
+                        <label class="flex items-center space-x-2 text-xs font-medium text-slate-700 cursor-pointer">
+                            <input type="checkbox" id="showGrid" checked onchange="renderCanvas()" class="rounded text-orange-600 focus:ring-orange-500 w-4 h-4">
+                            <span>Garis Bantu (Grid)</span>
+                        </label>
+                        <label class="flex items-center space-x-2 text-xs font-medium text-slate-700 cursor-pointer">
+                            <input type="checkbox" id="transparentBg" onchange="renderCanvas()" class="rounded text-orange-600 focus:ring-orange-500 w-4 h-4">
+                            <span>Background Transparan</span>
+                        </label>
+                        <div>
+                            <input type="text" id="valueSuffix" placeholder="Satuan (mis: %, Orang)" oninput="renderCanvas()" class="w-full px-2.5 py-1 rounded-lg border border-slate-300 text-xs">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Right Panel: Live Preview & Summary Table (7 cols on lg) -->
+        <div class="lg:col-span-7 flex flex-col space-y-6">
+            
+            <!-- Live Preview Card -->
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-5 flex flex-col">
+                <div class="flex flex-wrap items-center justify-between gap-2 mb-4">
+                    <div class="flex items-center gap-2">
+                        <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                        <h2 class="text-sm font-bold uppercase tracking-wider text-slate-600">Live Preview Grafik</h2>
+                        <span id="dimensionBadge" class="px-2 py-0.5 text-[11px] font-mono bg-slate-100 text-slate-600 rounded-md border border-slate-200">1200 x 700 px</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <button onclick="downloadPNG()" class="px-3.5 py-1.5 bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold rounded-lg transition flex items-center gap-1.5 shadow-sm">
+                            <i data-lucide="image-down" class="w-3.5 h-3.5"></i>
+                            <span>Simpan PNG</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Canvas Container with Checkerboard for transparency preview -->
+                <div class="relative w-full bg-slate-100 rounded-xl border border-slate-200/80 p-3 sm:p-6 flex items-center justify-center overflow-hidden" style="background-image: radial-gradient(#cbd5e1 1px, transparent 1px); background-size: 16px 16px;">
+                    <canvas id="chartCanvas" class="w-full h-auto max-h-[540px] object-contain rounded-lg shadow-lg bg-white transition-all"></canvas>
+                </div>
+
+                <div class="mt-3 flex flex-wrap items-center justify-between gap-2 text-xs text-slate-400">
+                    <span>💡 Tips: Kalimat panjang otomatis melakukan <em>auto-wrap</em> & <em>auto-scaling</em> agar tetap rapi.</span>
+                    <span>Resolusi Penuh saat di-download</span>
+                </div>
+            </div>
+
+            <!-- Tabel Rekapitulasi Narasi TUK -->
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-5">
+                <h3 class="text-sm font-bold uppercase tracking-wider text-slate-500 mb-3 flex items-center gap-2">
+                    <i data-lucide="file-spreadsheet" class="w-4 h-4 text-amber-700"></i>
+                    Ringkasan Tabel Narasi TUK & Capaian
+                </h3>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse text-xs sm:text-sm">
+                        <thead>
+                            <tr class="border-b border-slate-200 bg-slate-50 text-slate-600 font-semibold">
+                                <th class="py-2.5 px-3 rounded-tl-lg w-10 text-center">No</th>
+                                <th class="py-2.5 px-3">Narasi TUK (Keterangan Grafik)</th>
+                                <th class="py-2.5 px-3 text-right">Target (TUK)</th>
+                                <th class="py-2.5 px-3 text-right">Hasil</th>
+                                <th class="py-2.5 px-3 text-right rounded-tr-lg">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="summaryTableBody" class="divide-y divide-slate-200 text-slate-700">
+                            <!-- Injected by JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <script>
+        // --- State Aplikasi ---
+        let tukItems = [];
+
+        const defaultDemoData = [
+            {
+                id: 'row-1',
+                narasi: 'Training With KOMINFO dihadiri oleh minimal 80 mahasiswa aktif',
+                tuk: 80,
+                hasil: 95
+            },
+            {
+                id: 'row-2',
+                narasi: 'Rata-rata nilai post-test peserta pelatihan mencapai minimal 75 poin',
+                tuk: 75,
+                hasil: 84
+            },
+            {
+                id: 'row-3',
+                narasi: 'Tingkat kepuasan peserta terhadap materi dan pemateri sebesar 85%',
+                tuk: 85,
+                hasil: 92
+            },
+            {
+                id: 'row-4',
+                narasi: 'Ketepatan waktu pelaksanaan seluruh rangkaian acara sebesar 90%',
+                tuk: 90,
+                hasil: 85
+            }
+        ];
+
+        // --- Inisialisasi ---
+        window.onload = function () {
+            lucide.createIcons();
+            loadDemoData(false);
+        };
+
+        function showToast(message, isError = false) {
+            const toast = document.getElementById('toast');
+            const toastMessage = document.getElementById('toastMessage');
+            const toastContent = document.getElementById('toastContent');
+
+            toastMessage.textContent = message;
+            if (isError) {
+                toastContent.className = "bg-red-900 text-white px-4 py-3 rounded-xl shadow-xl flex items-center space-x-3 text-sm font-medium border border-red-700";
+            } else {
+                toastContent.className = "bg-slate-900 text-white px-4 py-3 rounded-xl shadow-xl flex items-center space-x-3 text-sm font-medium border border-slate-700";
+            }
+
+            toast.classList.remove('translate-y-20', 'opacity-0');
+            setTimeout(() => {
+                toast.classList.add('translate-y-20', 'opacity-0');
+            }, 3200);
+        }
+
+        function loadDemoData(notify = true) {
+            tukItems = JSON.parse(JSON.stringify(defaultDemoData));
+            document.getElementById('prokerName').value = 'Training With KOMINFO 2026';
+            document.getElementById('prokerSub').value = 'Perbandingan Target Ukuran Keberhasilan (TUK) dan Realisasi Hasil';
+            document.getElementById('tukColor').value = '#8B5A2B';
+            document.getElementById('hasilColor').value = '#F97316';
+            document.getElementById('tukColorHex').textContent = '#8B5A2B';
+            document.getElementById('hasilColorHex').textContent = '#F97316';
+            renderRowsUI();
+            renderCanvas();
+            if (notify) showToast('Data contoh berhasil dimuat ulang');
+        }
+
+        // --- Render UI Input Baris ---
+        function renderRowsUI() {
+            const container = document.getElementById('rowsContainer');
+            container.innerHTML = '';
+
+            tukItems.forEach((item, index) => {
+                const rowEl = document.createElement('div');
+                rowEl.className = 'p-3.5 rounded-xl bg-slate-50 border border-slate-200/90 space-y-3 transition hover:border-slate-300';
+                rowEl.innerHTML = `
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs font-bold text-slate-600 bg-slate-200/80 px-2 py-0.5 rounded-md">Indikator #${index + 1}</span>
+                        ${tukItems.length > 1 ? `
+                        <button onclick="removeRow('${item.id}')" class="text-slate-400 hover:text-red-600 transition p-1" title="Hapus Indikator">
+                            <i data-lucide="trash-2" class="w-4 h-4"></i>
+                        </button>
+                        ` : ''}
+                    </div>
+
+                    <div>
+                        <label class="block text-[11px] font-semibold text-slate-600 mb-1">Narasi TUK (Ditampilkan langsung di bawah grafik)</label>
+                        <textarea rows="2"
+                            oninput="updateItemField('${item.id}', 'narasi', this.value)"
+                            placeholder="Contoh: Training With KOMINFO dihadiri oleh 80 mahasiswa" 
+                            class="w-full px-3 py-2 rounded-lg border border-slate-300 bg-white text-xs sm:text-sm focus:ring-2 focus:ring-orange-500 outline-none resize-y leading-relaxed">${escapeHtml(item.narasi)}</textarea>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-[11px] font-semibold text-amber-900 mb-1">Nilai Target (TUK)</label>
+                            <input type="number" step="any" value="${item.tuk}" 
+                                oninput="updateItemField('${item.id}', 'tuk', parseFloat(this.value) || 0)"
+                                class="w-full px-3 py-1.5 rounded-lg border border-slate-300 bg-white text-xs sm:text-sm font-semibold text-slate-800 focus:ring-2 focus:ring-amber-700 outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-[11px] font-semibold text-orange-600 mb-1">Nilai Realisasi (Hasil)</label>
+                            <input type="number" step="any" value="${item.hasil}" 
+                                oninput="updateItemField('${item.id}', 'hasil', parseFloat(this.value) || 0)"
+                                class="w-full px-3 py-1.5 rounded-lg border border-slate-300 bg-white text-xs sm:text-sm font-semibold text-slate-800 focus:ring-2 focus:ring-orange-500 outline-none">
+                        </div>
+                    </div>
+                `;
+                container.appendChild(rowEl);
+            });
+
+            lucide.createIcons();
+            renderSummaryTable();
+        }
+
+        function renderSummaryTable() {
+            const tbody = document.getElementById('summaryTableBody');
+            const suffix = document.getElementById('valueSuffix').value || '';
+            tbody.innerHTML = '';
+
+            tukItems.forEach((item, idx) => {
+                const isAchieved = item.hasil >= item.tuk;
+                const pct = item.tuk > 0 ? Math.round((item.hasil / item.tuk) * 100) : 0;
+                const tr = document.createElement('tr');
+                tr.className = 'hover:bg-slate-50/80';
+                tr.innerHTML = `
+                    <td class="py-2.5 px-3 text-center font-mono text-xs text-slate-400">${idx + 1}</td>
+                    <td class="py-2.5 px-3 font-medium text-slate-800 leading-snug">${escapeHtml(item.narasi || '-')}</td>
+                    <td class="py-2.5 px-3 text-right font-mono font-medium text-amber-900 whitespace-nowrap">${item.tuk}${escapeHtml(suffix)}</td>
+                    <td class="py-2.5 px-3 text-right font-mono font-bold text-orange-600 whitespace-nowrap">${item.hasil}${escapeHtml(suffix)}</td>
+                    <td class="py-2.5 px-3 text-right whitespace-nowrap">
+                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold ${isAchieved ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'}">
+                            ${pct}% (${isAchieved ? 'Tercapai' : 'Belum'})
+                        </span>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function updateItemField(id, field, value) {
+            const item = tukItems.find(x => x.id === id);
+            if (!item) return;
+            item[field] = value;
+            renderSummaryTable();
+            renderCanvas();
+        }
+
+        function addNewRow() {
+            const newId = 'row-' + Date.now();
+            tukItems.push({
+                id: newId,
+                narasi: 'Indikator keberhasilan program kerja baru',
+                tuk: 80,
+                hasil: 85
+            });
+            renderRowsUI();
+            renderCanvas();
+        }
+
+        function removeRow(id) {
+            if (tukItems.length <= 1) return;
+            tukItems = tukItems.filter(x => x.id !== id);
+            renderRowsUI();
+            renderCanvas();
+        }
+
+        // --- Pengaturan Warna & Ukuran ---
+        function updateColors() {
+            const tukColor = document.getElementById('tukColor').value;
+            const hasilColor = document.getElementById('hasilColor').value;
+            document.getElementById('tukColorHex').textContent = tukColor.toUpperCase();
+            document.getElementById('hasilColorHex').textContent = hasilColor.toUpperCase();
+            renderCanvas();
+        }
+
+        function setColorPreset(tukHex, hasilHex) {
+            document.getElementById('tukColor').value = tukHex;
+            document.getElementById('hasilColor').value = hasilHex;
+            updateColors();
+        }
+
+        function applySizePreset() {
+            const val = document.getElementById('sizePreset').value;
+            if (val === 'custom') return;
+            const [w, h] = val.split('x').map(Number);
+            document.getElementById('imgWidth').value = w;
+            document.getElementById('imgHeight').value = h;
+            renderCanvas();
+        }
+
+        function onCustomDimensionChange() {
+            document.getElementById('sizePreset').value = 'custom';
+            renderCanvas();
+        }
+
+        // --- Helper Pemecah Baris & Auto-Scaling Kalimat Panjang ---
+        function getWrappedLines(ctx, text, maxWidth) {
+            const rawParagraphs = String(text || '').split('\n');
+            const lines = [];
+
+            rawParagraphs.forEach(para => {
+                const words = para.trim().split(/\s+/).filter(Boolean);
+                if (words.length === 0) return;
+                let currentLine = '';
+
+                for (let n = 0; n < words.length; n++) {
+                    const word = words[n];
+                    const testLine = currentLine ? currentLine + ' ' + word : word;
+                    const metrics = ctx.measureText(testLine);
+
+                    if (metrics.width > maxWidth && currentLine !== '') {
+                        lines.push(currentLine);
+                        currentLine = word;
+                    } else {
+                        currentLine = testLine;
+                    }
+                }
+                if (currentLine) lines.push(currentLine);
+            });
+
+            return lines.length > 0 ? lines : ['-'];
+        }
+
+        // --- Menggambar Bar Chart pada Canvas ---
+        function renderCanvas() {
+            const canvas = document.getElementById('chartCanvas');
+            const ctx = canvas.getContext('2d');
+
+            let width = parseInt(document.getElementById('imgWidth').value) || 1200;
+            let height = parseInt(document.getElementById('imgHeight').value) || 700;
+
+            width = Math.max(400, Math.min(4000, width));
+            height = Math.max(350, Math.min(3000, height));
+
+            canvas.width = width;
+            canvas.height = height;
+            document.getElementById('dimensionBadge').textContent = `${width} x ${height} px`;
+
+            const prokerName = document.getElementById('prokerName').value || 'Nama Program Kerja / Agenda';
+            const prokerSub = document.getElementById('prokerSub').value || '';
+            const tukColor = document.getElementById('tukColor').value || '#8B5A2B';
+            const hasilColor = document.getElementById('hasilColor').value || '#F97316';
+            const showPercentage = document.getElementById('showPercentage').checked;
+            const showGrid = document.getElementById('showGrid').checked;
+            const transparentBg = document.getElementById('transparentBg').checked;
+            const suffix = document.getElementById('valueSuffix').value || '';
+
+            // Skala proporsional berdasarkan ukuran canvas
+            const scale = Math.min(width / 1200, height / 700);
+            const s = (val) => Math.round(val * Math.max(0.62, scale));
+
+            ctx.clearRect(0, 0, width, height);
+
+            // 1. Background
+            if (!transparentBg) {
+                ctx.fillStyle = '#FFFFFF';
+                ctx.fillRect(0, 0, width, height);
+
+                const topGrad = ctx.createLinearGradient(0, 0, width, 0);
+                topGrad.addColorStop(0, tukColor);
+                topGrad.addColorStop(1, hasilColor);
+                ctx.fillStyle = topGrad;
+                ctx.fillRect(0, 0, width, s(10));
+            }
+
+            const padLeft = s(100);
+            const padRight = s(60);
+            const padTop = s(145);
+            const chartW = width - padLeft - padRight;
+
+            const count = tukItems.length;
+            if (count === 0) return;
+            const groupWidth = chartW / count;
+            const maxLabelWidth = Math.max(s(60), groupWidth - s(22));
+
+            // 2. Kalkulasi Auto-Scaling Font & Ruang Bawah untuk Kalimat Panjang
+            let labelFontSize = s(14);
+            const minFontSize = Math.max(9, s(10));
+            let wrappedItems = [];
+            let maxLinesCount = 1;
+
+            // Turunkan ukuran font otomatis jika kalimat terlalu panjang (lebih dari 4 baris atau ada kata melebihi lebar kolom)
+            while (labelFontSize >= minFontSize) {
+                ctx.font = `600 ${labelFontSize}px Inter, sans-serif`;
+                wrappedItems = tukItems.map((item, idx) => {
+                    const text = (item.narasi && item.narasi.trim()) ? item.narasi.trim() : `Indikator ${idx + 1}`;
+                    return getWrappedLines(ctx, text, maxLabelWidth);
+                });
+                maxLinesCount = wrappedItems.reduce((m, lines) => Math.max(m, lines.length), 1);
+
+                const anyWordTooWide = wrappedItems.some(lines =>
+                    lines.some(line => ctx.measureText(line).width > maxLabelWidth * 1.05)
+                );
+
+                if ((maxLinesCount <= 4 && !anyWordTooWide) || labelFontSize === minFontSize) {
+                    break;
+                }
+                labelFontSize -= 1;
+            }
+
+            const labelLineHeight = Math.round(labelFontSize * 1.35);
+            const dynamicTextHeight = maxLinesCount * labelLineHeight;
+
+            // Sesuaikan padding bawah secara dinamis dengan panjang baris kalimat narasi (maksimal 42% tinggi gambar)
+            const padBottom = Math.min(
+                Math.round(height * 0.42),
+                Math.max(s(110), dynamicTextHeight + s(65))
+            );
+            const chartH = Math.max(s(140), height - padTop - padBottom);
+
+            // 3. Judul & Subjudul
+            ctx.textAlign = 'center';
+            ctx.fillStyle = '#0F172A';
+            ctx.font = `800 ${s(28)}px Inter, sans-serif`;
+            ctx.fillText(prokerName, width / 2, s(56));
+
+            if (prokerSub) {
+                ctx.fillStyle = '#64748B';
+                ctx.font = `500 ${s(16)}px Inter, sans-serif`;
+                ctx.fillText(prokerSub, width / 2, s(84));
+            }
+
+            // 4. Legend (Keterangan Warna TUK & Hasil)
+            const legendY = s(115);
+            const boxSize = s(16);
+            const gapLegend = s(40);
+            ctx.font = `600 ${s(15)}px Inter, sans-serif`;
+            const tukText = "Target (TUK)";
+            const hasilText = "Realisasi (Hasil)";
+            const tukTextW = ctx.measureText(tukText).width;
+            const hasilTextW = ctx.measureText(hasilText).width;
+            const totalLegendW = boxSize + s(8) + tukTextW + gapLegend + boxSize + s(8) + hasilTextW;
+            let startLegendX = (width - totalLegendW) / 2;
+
+            drawRoundedRect(ctx, startLegendX, legendY - boxSize + s(3), boxSize, boxSize, s(4), tukColor);
+            ctx.textAlign = 'left';
+            ctx.fillStyle = '#334155';
+            ctx.fillText(tukText, startLegendX + boxSize + s(8), legendY);
+
+            startLegendX += boxSize + s(8) + tukTextW + gapLegend;
+            drawRoundedRect(ctx, startLegendX, legendY - boxSize + s(3), boxSize, boxSize, s(4), hasilColor);
+            ctx.fillStyle = '#334155';
+            ctx.fillText(hasilText, startLegendX + boxSize + s(8), legendY);
+
+            // 5. Perhitungan Skala Y
+            const maxDataVal = tukItems.reduce((max, item) => Math.max(max, item.tuk || 0, item.hasil || 0), 0);
+            const niceMax = calculateNiceMax(maxDataVal > 0 ? maxDataVal * 1.15 : 100);
+            const gridSteps = 5;
+
+            // 6. Menggambar Grid & Sumbu Y
+            ctx.textAlign = 'right';
+            ctx.font = `500 ${s(13)}px Inter, sans-serif`;
+
+            for (let i = 0; i <= gridSteps; i++) {
+                const ratio = i / gridSteps;
+                const yPos = padTop + chartH - (ratio * chartH);
+                const valLabel = Math.round((niceMax * ratio) * 10) / 10;
+
+                if (showGrid) {
+                    ctx.beginPath();
+                    ctx.strokeStyle = i === 0 ? '#94A3B8' : '#E2E8F0';
+                    ctx.lineWidth = i === 0 ? s(2) : 1;
+                    if (i > 0) ctx.setLineDash([s(5), s(5)]);
+                    else ctx.setLineDash([]);
+                    ctx.moveTo(padLeft, yPos);
+                    ctx.lineTo(padLeft + chartW, yPos);
+                    ctx.stroke();
+                    ctx.setLineDash([]);
+                }
+
+                ctx.fillStyle = '#64748B';
+                ctx.fillText(`${valLabel}${suffix}`, padLeft - s(14), yPos + s(5));
+            }
+
+            // 7. Menggambar Bar TUK, Hasil & Kalimat Narasi
+            const maxBarWidth = Math.min(s(75), groupWidth * 0.34);
+            const barSpacing = Math.max(s(6), maxBarWidth * 0.16);
+
+            tukItems.forEach((item, idx) => {
+                const centerX = padLeft + (idx * groupWidth) + (groupWidth / 2);
+
+                const tukVal = Math.max(0, item.tuk || 0);
+                const hasilVal = Math.max(0, item.hasil || 0);
+
+                const tukH = Math.min(chartH, (tukVal / niceMax) * chartH);
+                const hasilH = Math.min(chartH, (hasilVal / niceMax) * chartH);
+
+                const tukX = centerX - maxBarWidth - (barSpacing / 2);
+                const tukY = padTop + chartH - tukH;
+
+                const hasilX = centerX + (barSpacing / 2);
+                const hasilY = padTop + chartH - hasilH;
+
+                ctx.save();
+                ctx.shadowColor = 'rgba(15, 23, 42, 0.08)';
+                ctx.shadowBlur = s(10);
+                ctx.shadowOffsetY = s(4);
+
+                if (tukH > 0) {
+                    drawTopRoundedBar(ctx, tukX, tukY, maxBarWidth, tukH, s(8), tukColor);
+                }
+
+                if (hasilH > 0) {
+                    drawTopRoundedBar(ctx, hasilX, hasilY, maxBarWidth, hasilH, s(8), hasilColor);
+                }
+                ctx.restore();
+
+                // Label Nilai di atas Bar TUK & Hasil
+                ctx.textAlign = 'center';
+                ctx.font = `700 ${s(14)}px Inter, sans-serif`;
+                ctx.fillStyle = tukColor;
+                ctx.fillText(`${tukVal}${suffix}`, tukX + maxBarWidth / 2, tukY - s(10));
+
+                ctx.fillStyle = hasilColor;
+                ctx.fillText(`${hasilVal}${suffix}`, hasilX + maxBarWidth / 2, hasilY - s(10));
+
+                // Badge Persentase Capaian
+                if (showPercentage && tukVal > 0) {
+                    const pct = Math.round((hasilVal / tukVal) * 100);
+                    const topMostY = Math.min(tukY, hasilY) - s(34);
+                    const badgeText = `${pct}%`;
+                    ctx.font = `700 ${s(11)}px Inter, sans-serif`;
+                    const badgeW = ctx.measureText(badgeText).width + s(14);
+                    const badgeH = s(20);
+                    const badgeX = centerX - badgeW / 2;
+
+                    const isGood = pct >= 100;
+                    drawRoundedRect(ctx, badgeX, topMostY - badgeH + s(4), badgeW, badgeH, s(10), isGood ? '#DCFCE7' : '#FEF3C7');
+                    ctx.fillStyle = isGood ? '#15803D' : '#B45309';
+                    ctx.fillText(badgeText, centerX, topMostY - s(2));
+                }
+
+                // Tampilkan Narasi TUK Apa Adanya dengan Auto-Scaling
+                ctx.fillStyle = '#1E293B';
+                ctx.font = `600 ${labelFontSize}px Inter, sans-serif`;
+                ctx.textAlign = 'center';
+
+                const lines = wrappedItems[idx] || ['-'];
+                const startTextY = padTop + chartH + s(24);
+                lines.forEach((line, lineIdx) => {
+                    ctx.fillText(line, centerX, startTextY + (lineIdx * labelLineHeight));
+                });
+            });
+
+            // Garis Dasar Sumbu X
+            ctx.beginPath();
+            ctx.strokeStyle = '#64748B';
+            ctx.lineWidth = s(2);
+            ctx.moveTo(padLeft, padTop + chartH);
+            ctx.lineTo(padLeft + chartW, padTop + chartH);
+            ctx.stroke();
+
+            // Footer Watermark Halus
+            ctx.textAlign = 'right';
+            ctx.fillStyle = '#94A3B8';
+            ctx.font = `500 ${s(11)}px Inter, sans-serif`;
+            ctx.fillText(`Grafik Perbandingan TUK & Realisasi • ${prokerName}`, width - padRight, height - s(16));
+        }
+
+        // --- Fungsi Utilitas Canvas ---
+        function calculateNiceMax(val) {
+            if (val <= 10) return 10;
+            if (val <= 50) return Math.ceil(val / 5) * 5;
+            if (val <= 100) return Math.ceil(val / 10) * 10;
+            const magnitude = Math.pow(10, Math.floor(Math.log10(val)));
+            const residual = val / magnitude;
+            if (residual <= 1.2) return 1.2 * magnitude;
+            if (residual <= 1.5) return 1.5 * magnitude;
+            if (residual <= 2) return 2 * magnitude;
+            if (residual <= 2.5) return 2.5 * magnitude;
+            if (residual <= 5) return 5 * magnitude;
+            return 10 * magnitude;
+        }
+
+        function drawTopRoundedBar(ctx, x, y, width, height, radius, fillStyle) {
+            const r = Math.min(radius, width / 2, height / 2);
+            ctx.beginPath();
+            ctx.moveTo(x, y + height);
+            ctx.lineTo(x, y + r);
+            ctx.quadraticCurveTo(x, y, x + r, y);
+            ctx.lineTo(x + width - r, y);
+            ctx.quadraticCurveTo(x + width, y, x + width, y + r);
+            ctx.lineTo(x + width, y + height);
+            ctx.closePath();
+            ctx.fillStyle = fillStyle;
+            ctx.fill();
+        }
+
+        function drawRoundedRect(ctx, x, y, width, height, radius, fillStyle) {
+            const r = Math.min(radius, width / 2, height / 2);
+            ctx.beginPath();
+            ctx.moveTo(x + r, y);
+            ctx.lineTo(x + width - r, y);
+            ctx.quadraticCurveTo(x + width, y, x + width, y + r);
+            ctx.lineTo(x + width, y + height - r);
+            ctx.quadraticCurveTo(x + width, y + height, x + width - r, y + height);
+            ctx.lineTo(x + r, y + height);
+            ctx.quadraticCurveTo(x, y + height, x, y + height - r);
+            ctx.lineTo(x, y + r);
+            ctx.quadraticCurveTo(x, y, x + r, y);
+            ctx.closePath();
+            ctx.fillStyle = fillStyle;
+            ctx.fill();
+        }
+
+        function escapeHtml(str) {
+            if (typeof str !== 'string') return '';
+            return str
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
+
+        // --- Download Gambar PNG ---
+        function downloadPNG() {
+            renderCanvas();
+            const canvas = document.getElementById('chartCanvas');
+            const prokerName = (document.getElementById('prokerName').value || 'TUK-Chart')
+                .toLowerCase()
+                .replace(/[^a-z0-9]+/g, '-')
+                .replace(/(^-|-$)/g, '');
+
+            const dataUrl = canvas.toDataURL('image/png');
+            const link = document.createElement('a');
+            link.download = `grafik-tuk-${prokerName}.png`;
+            link.href = dataUrl;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+
+            showToast('Gambar PNG berhasil diunduh!');
+        }
+    </script>
+</body>
+</html>
